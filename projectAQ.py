@@ -4,6 +4,8 @@ from astropy.table import Table
 from uncertainties import ufloat # for error incountering
 import pandas as pd
 from astropy.cosmology import FlatLambdaCDM
+import matplotlib.pyplot as plt
+from uncertainties import UFloat
 #Access 50 celestial bodies red shifts redshifts from SDSS
 query = "SELECT TOP 50 ra, dec, z FROM SpecObj WHERE z > 0"
 results = SDSS.query_sql(query)
@@ -68,8 +70,8 @@ for key, df in results_dict.items():
     for col in df.columns:
         if col.startswith('Distances (Mpc)'):
             combined_df[col] = df[col]
-print(combined_df)
-print("\nShape of the combined dataframe:", combined_df.shape)
+"""print(combined_df)
+print("\nShape of the combined dataframe:", combined_df.shape)"""
 
 #for age
 # Fixed matter density parameter for a flat universe
@@ -93,3 +95,48 @@ age_df = pd.DataFrame([
 
 # Print the results
 print(age_df)
+
+age_values = age_df["Age of Universe (Gyr =10^9 yr)"].apply(
+    lambda x: x.nominal_value if isinstance(x, UFloat) else sum(x) / len(x)
+)
+age_errors = age_df["Age of Universe (Gyr =10^9 yr)"].apply(
+    lambda x: x.std_dev if isinstance(x, UFloat) else 0
+)
+
+
+# Plot the ages with error bars
+plt.figure(figsize=(15, 8))
+plt.bar(age_df["Hubble Source"], age_values, yerr=age_errors, capsize=5, color='teal', alpha=0.7)
+
+plt.xlabel('Hubble Sources')
+plt.ylabel('Age of Universe (Gyr)')
+plt.title('Age of Universe for Various Hubble Constants')
+plt.xticks(rotation=90)
+plt.grid(axis='y', linestyle='--', alpha=0.6)
+plt.tight_layout()
+plt.show()
+# Convert all distance columns to nominal values
+distance_columns = [col for col in combined_df.columns if col.startswith("Distances")]
+for col in distance_columns:
+    combined_df[col] = combined_df[col].apply(
+        lambda x: x.nominal_value if isinstance(x, UFloat) else x
+    )
+
+# Extract RA for labels (all 50 bodies)
+ra_all = combined_df['RA']
+
+# Plot the distances for all Hubble constants
+plt.figure(figsize=(20, 10))
+
+# Iterate over Hubble constant distances for all celestial bodies
+for col in distance_columns:
+    plt.bar(ra_all, combined_df[col], label=col, alpha=0.7)
+
+plt.xlabel('Right Ascension (RA)')
+plt.ylabel('Distance (Mpc)')
+plt.title('Distances of 50 Celestial Bodies for Various Hubble Constants')
+plt.xticks(rotation=45, fontsize=8)
+plt.legend(loc='upper right', fontsize=8, bbox_to_anchor=(1.15, 1))
+plt.grid(axis='y', linestyle='--', alpha=0.6)
+plt.tight_layout()
+plt.show()
