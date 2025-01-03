@@ -125,18 +125,32 @@ for col in distance_columns:
 # Extract RA for labels (all 50 bodies)
 ra_all = combined_df['RA']
 
-# Plot the distances for all Hubble constants
+# Set up the figure
 plt.figure(figsize=(20, 10))
 
-# Iterate over Hubble constant distances for all celestial bodies
-for col in distance_columns:
-    plt.bar(ra_all, combined_df[col], label=col, alpha=0.7)
+# Calculate the bar width to separate bars for each Hubble constant
+num_constants = len(distance_columns)
+bar_width = 1 / (num_constants + 1)  # Adjust based on the number of constants
+indices = np.arange(len(ra_all))  # Indices for RA positions
 
-plt.xlabel('Right Ascension (RA)')
-plt.ylabel('Distance (Mpc)')
-plt.title('Distances of 50 Celestial Bodies for Various Hubble Constants')
-plt.xticks(rotation=45, fontsize=8)
+# Iterate over Hubble constant distances and plot vertical bars
+for i, col in enumerate(distance_columns):
+    plt.bar(
+        indices + i * bar_width,  # Offset bars for each constant
+        combined_df[col],
+        width=bar_width,
+        label=col,
+        alpha=0.7
+    )
+
+# Formatting the plot
+plt.xlabel('Right Ascension (RA)', fontsize=12)
+plt.ylabel('Distance (Mpc)', fontsize=12)
+plt.title('Distances of 50 Celestial Bodies for Various Hubble Constants', fontsize=16)
+plt.xticks(indices + (num_constants - 1) * bar_width / 2, ra_all, rotation=45, fontsize=8)  # Center ticks
 plt.legend(loc='upper right', fontsize=8, bbox_to_anchor=(1.15, 1))
 plt.grid(axis='y', linestyle='--', alpha=0.6)
 plt.tight_layout()
+
+# Show the plot
 plt.show()
